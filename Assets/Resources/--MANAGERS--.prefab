@@ -89,9 +89,75 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cef7e1b4ce6f6e4a8f6d429f1a051d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
-  roomNameInput: {fileID: 0}
   hostButton: {fileID: 0}
   joinButton: {fileID: 0}
+--- !u!1 &6785724664570381606
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3572444112383225500}
+  - component: {fileID: 7243634514500906289}
+  m_Layer: 0
+  m_Name: PowerUpManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3572444112383225500
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6785724664570381606}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3871623347365880442}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7243634514500906289
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6785724664570381606}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd538142136aeb0479071aa6252bbd89, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TripleDrop.PowerUps.PowerUpGenerator
+  powerUpSettings:
+  - powerUpType: 0
+    spawnWeight: 10
+  - powerUpType: 1
+    spawnWeight: 10
+  - powerUpType: 2
+    spawnWeight: 10
+  - powerUpType: 3
+    spawnWeight: 10
+  - powerUpType: 4
+    spawnWeight: 10
+  - powerUpType: 5
+    spawnWeight: 10
+  - powerUpType: 6
+    spawnWeight: 10
+  - powerUpType: 7
+    spawnWeight: 5
+  - powerUpType: 8
+    spawnWeight: 5
+  spawnAreaCenter: {x: 0, y: 0, z: 0}
+  spawnAreaSize: {x: 10, y: 0, z: 10}
+  spawnInterval: 15
+  powerUpPrefabName: PowerUp
 --- !u!1 &7073500331343572410
 GameObject:
   m_ObjectHideFlags: 0
@@ -123,5 +189,6 @@ Transform:
   m_Children:
   - {fileID: 113573032857642227}
   - {fileID: 6905439873322419039}
+  - {fileID: 3572444112383225500}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
