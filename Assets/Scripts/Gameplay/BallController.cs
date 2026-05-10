@@ -58,7 +58,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             if (Time.time - lastPickupRequestTime < 0.5f) return;
             lastPickupRequestTime = Time.time;
 
-            photonView.RequestOwnership();
             photonView.RPC("RPC_PickupBall", RpcTarget.All, player.photonView.ViewID);
         }
     }
@@ -76,6 +75,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             {
                 isHeld = true;
                 rb.isKinematic = true;
+                rb.mass = 1f; // Reset ball mass to default
                 col.enabled = false;
                 bounceCount = 0;
 
@@ -92,12 +92,17 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
                 player.hasBall = true;
                 player.heldBall = this;
                 currentHolder = player.transform;
+
+                if (player.photonView.IsMine)
+                {
+                    photonView.RequestOwnership();
+                }
             }
         }
     }
 
     [PunRPC]
-    public void RPC_ThrowBall(Vector3 throwForce)
+    public void RPC_ThrowBall(Vector3 throwForce, float massModifier = 1f, bool isFireBall = false)
     {
         isHeld = false;
         transform.SetParent(null);
@@ -105,6 +110,15 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 
         PhotonTransformView ptv = GetComponent<PhotonTransformView>();
         if (ptv != null) ptv.enabled = true;
+
+        rb.mass = massModifier; // Apply heavy or light modifier
+
+        if (isFireBall)
+        {
+            // Activate fire particle system if exists
+            // Set 4 point score flag
+            Debug.Log("Ball is on FIRE!");
+        }
 
         if (photonView.IsMine)
         {
@@ -139,4 +153,5 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             }
         }
     }
-}
+}      
+    

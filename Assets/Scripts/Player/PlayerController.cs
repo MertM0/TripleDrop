@@ -1,9 +1,11 @@
 using UnityEngine;
 using Photon.Pun;
 using UnityEngine.InputSystem;
+using TripleDrop.PowerUps;
 
 [RequireComponent(typeof(CharacterController))]
 [RequireComponent(typeof(PlayerInputHandler))]
+[RequireComponent(typeof(PlayerPowerUpController))]
 public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 {
     public float moveSpeed = 5f;
@@ -19,8 +21,10 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
     private CharacterController characterController;
     private PlayerInputHandler inputHandler;
+    private PlayerPowerUpController powerUpController;
     private Vector3 velocity;
     private float cameraPitch = 0f;
+    private float targetCameraPitch = 0f;
 
     public bool hasBall = false;
     public float chargePower = 0f;
@@ -32,6 +36,7 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     {
         characterController = GetComponent<CharacterController>();
         inputHandler = GetComponent<PlayerInputHandler>();
+        powerUpController = GetComponent<PlayerPowerUpController>();
 
         inputHandler.OnJumpEvent += OnJump;
         inputHandler.OnThrowStartedEvent += OnThrowStarted;
@@ -62,7 +67,15 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
     private void Update()
     {
-        if (!photonView.IsMine) return;
+        if (!photonView.IsMine)
+        {
+            if (cameraTransform != null)
+            {
+                cameraPitch = Mathf.Lerp(cameraPitch, targetCameraPitch, Time.deltaTime * 15f);
+                cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+            }
+            return;
+        }
 
         HandleMovement();
         HandleLook();
@@ -84,21 +97,27 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
         if (hasBall)
         {
-            velocity.y += gravity * Time.deltaTime;
+            velocity.y += (gravity * powerUpController.GravityScale) * Time.deltaTime;
             characterController.Move(velocity * Time.deltaTime);
             return;
         }
 
-        float currentSpeed = moveSpeed;
+        float currentSpeed = moveSpeed * powerUpController.SpeedMultiplier;
         if (inputHandler.IsSprinting)
         {
             currentSpeed *= sprintMultiplier;
         }
 
-        Vector3 move = transform.right * inputHandler.MoveInput.x + transform.forward * inputHandler.MoveInput.y;
+        Vector2 rawMoveInput = inputHandler.MoveInput;
+        if (powerUpController.IsPlatformPanicActive)
+        {
+            rawMoveInput *= -1f;
+        }
+
+        Vector3 move = transform.right * rawMoveInput.x + transform.forward * rawMoveInput.y;
         characterController.Move(move * currentSpeed * Time.deltaTime);
 
-        velocity.y += gravity * Time.deltaTime;
+        velocity.y += (gravity * powerUpController.GravityScale) * Time.deltaTime;
         characterController.Move(velocity * Time.deltaTime);
     }
 
@@ -122,7 +141,7 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     {
         if (characterController.isGrounded)
         {
-            velocity.y = Mathf.Sqrt(jumpForce * -2f * gravity);
+            velocity.y = Mathf.Sqrt((jumpForce * powerUpController.JumpMultiplier) * -2f * gravity);
         }
     }
 
@@ -149,9 +168,16 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         if (heldBall != null && photonView.IsMine)
         {
             Vector3 throwDir = cameraTransform.forward;
-            float force = Mathf.Lerp(5f, 25f, power / maxChargePower);
+            float force = Mathf.Lerp(5f, 25f, power / maxChargePower) * powerUpController.ThrowPowerMultiplier;
 
-            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, throwDir * force);
+            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, throwDir * force, powerUpController.BallMassMultiplier, powerUpController.IsFireBallActive);
+            
+            // Consume single-use fire ball modifier
+            if (powerUpController.IsFireBallActive)
+            {
+                powerUpController.ConsumeFireBall();
+            }
+
             heldBall = null;
         }
 
@@ -166,10 +192,10 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         }
         else
         {
-            cameraPitch = (float)stream.ReceiveNext();
+            float receivedPitch = (float)stream.ReceiveNext();
             if (cameraTransform != null && !photonView.IsMine)
             {
-                cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+                targetCameraPitch = receivedPitch;
             }
         }
     }
