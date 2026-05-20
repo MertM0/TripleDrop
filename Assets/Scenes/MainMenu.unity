@@ -2030,6 +2030,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: --MANAGERS--
       objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnInterval
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 2373684730847591442, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}

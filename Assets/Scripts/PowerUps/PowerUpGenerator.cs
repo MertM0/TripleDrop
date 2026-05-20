@@ -1,5 +1,6 @@
 using UnityEngine;
 using Photon.Pun;
+using Photon.Realtime;
 using System.Collections.Generic;
 
 namespace TripleDrop.PowerUps
@@ -8,6 +9,7 @@ namespace TripleDrop.PowerUps
     public class PowerUpSetting
     {
         public PowerUpType powerUpType;
+        public string prefabName;
         [Range(0f, 100f)]
         public float spawnWeight = 10f;
     }
@@ -17,8 +19,9 @@ namespace TripleDrop.PowerUps
         public List<PowerUpSetting> powerUpSettings = new List<PowerUpSetting>();
         public Vector3 spawnAreaCenter;
         public Vector3 spawnAreaSize = new Vector3(10, 0, 10);
+        public float spawnHeight = 1f;
         public float spawnInterval = 15f;
-        public string powerUpPrefabName = "PowerUp";
+        public int maxConcurrentPowerUps = 2;
 
         private float nextSpawnTime;
 
@@ -29,15 +32,15 @@ namespace TripleDrop.PowerUps
             {
                 powerUpSettings = new List<PowerUpSetting>
                 {
-                    new PowerUpSetting { powerUpType = PowerUpType.SpeedUP, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.JumpUP, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.PowerUP, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.LowGravity, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.HighGravity, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.HeavyBall, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.LightBall, spawnWeight = 10f },
-                    new PowerUpSetting { powerUpType = PowerUpType.FireBall, spawnWeight = 5f }, // FireBall is slightly rarer
-                    new PowerUpSetting { powerUpType = PowerUpType.PlatformPanic, spawnWeight = 5f }
+                    new PowerUpSetting { powerUpType = PowerUpType.SpeedUP,      prefabName = "PowerUp_SpeedUP",      spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.JumpUP,       prefabName = "PowerUp_JumpUP",       spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.PowerUP,      prefabName = "PowerUp_PowerUP",      spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.LowGravity,   prefabName = "PowerUp_LowGravity",   spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.HighGravity,  prefabName = "PowerUp_HighGravity",  spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.HeavyBall,    prefabName = "PowerUp_HeavyBall",    spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.LightBall,    prefabName = "PowerUp_LightBall",    spawnWeight = 10f },
+                    new PowerUpSetting { powerUpType = PowerUpType.FireBall,     prefabName = "PowerUp_FireBall",     spawnWeight = 5f  },
+                    new PowerUpSetting { powerUpType = PowerUpType.PlatformPanic,prefabName = "PowerUp_PlatformPanic",spawnWeight = 5f  }
                 };
             }
         }
@@ -46,6 +49,12 @@ namespace TripleDrop.PowerUps
         private void Start()
         {
             nextSpawnTime = Time.time + spawnInterval;
+        }
+
+        public override void OnMasterClientSwitched(Player newMasterClient)
+        {
+            if (newMasterClient.IsLocal)
+                nextSpawnTime = Time.time + spawnInterval;
         }
 
         private void Update()
@@ -63,14 +72,12 @@ namespace TripleDrop.PowerUps
         {
             if (powerUpSettings == null || powerUpSettings.Count == 0) return;
 
-            Vector3 randomPos = spawnAreaCenter + new Vector3(
-                Random.Range(-spawnAreaSize.x / 2f, spawnAreaSize.x / 2f),
-                Random.Range(-spawnAreaSize.y / 2f, spawnAreaSize.y / 2f),
-                Random.Range(-spawnAreaSize.z / 2f, spawnAreaSize.z / 2f)
-            );
+            if (FindObjectsByType<PowerUp>(FindObjectsSortMode.None).Length >= maxConcurrentPowerUps) return;
 
             float totalWeight = 0f;
             foreach (var setting in powerUpSettings) totalWeight += setting.spawnWeight;
+
+            if (totalWeight <= 0f) return;
 
             float randomWeight = Random.Range(0f, totalWeight);
             PowerUpSetting selectedSetting = powerUpSettings[0];
@@ -85,18 +92,24 @@ namespace TripleDrop.PowerUps
                 }
             }
 
-            object[] data = new object[]
-            {
-                (int)selectedSetting.powerUpType
-            };
+            if (string.IsNullOrEmpty(selectedSetting.prefabName)) return;
 
-            PhotonNetwork.InstantiateRoomObject(powerUpPrefabName, randomPos, Quaternion.identity, 0, data);
+            Vector3 spawnPos = new Vector3(
+                spawnAreaCenter.x + Random.Range(-spawnAreaSize.x / 2f, spawnAreaSize.x / 2f),
+                spawnHeight,
+                spawnAreaCenter.z + Random.Range(-spawnAreaSize.z / 2f, spawnAreaSize.z / 2f)
+            );
+
+            object[] data = new object[] { (int)selectedSetting.powerUpType };
+
+            PhotonNetwork.InstantiateRoomObject(selectedSetting.prefabName, spawnPos, Quaternion.identity, 0, data);
         }
 
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = new Color(0, 1, 0, 0.3f);
-            Gizmos.DrawCube(spawnAreaCenter, spawnAreaSize);
+            Vector3 gizmoSize = new Vector3(spawnAreaSize.x, 0.1f, spawnAreaSize.z);
+            Gizmos.DrawCube(new Vector3(spawnAreaCenter.x, spawnHeight, spawnAreaCenter.z), gizmoSize);
         }
     }
 }
