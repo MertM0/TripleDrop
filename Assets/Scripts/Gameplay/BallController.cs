@@ -6,67 +6,138 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 {
     public int bounceCount = 0;
     public bool isHeld = false;
+    
+    public bool isPenaltyBall = false;
+    public bool touchedHoop = false;
+    public int lastThrowerActorNumber = -1;
 
     private Rigidbody rb;
     private SphereCollider col;
     private Transform currentHolder;
+    private MeshRenderer meshRenderer;
+
+    [Header("Materials")]
+    public Material orangeMat;
+    public Material yellowMat;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         col = GetComponent<SphereCollider>();
+        meshRenderer = GetComponent<MeshRenderer>();
+        UpdateVisuals();
     }
 
-    private void Start()
+    private void UpdateVisuals()
     {
-        if (!photonView.IsMine && !isHeld)
+        if (meshRenderer != null)
         {
-            rb.isKinematic = true;
+            meshRenderer.material = isPenaltyBall ? yellowMat : orangeMat;
         }
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (!isHeld && collision.gameObject.layer == LayerMask.NameToLayer("Ground"))
+        if (collision.gameObject.CompareTag("Hoop"))
         {
             if (photonView.IsMine)
             {
-                bounceCount++;
+                touchedHoop = true;
             }
+            return;
         }
 
-        if (isHeld) return;
+        if (!isHeld && !collision.gameObject.CompareTag("Player") && !collision.gameObject.CompareTag("Hoop"))
+        {
+            if (photonView.IsMine)
+            {
+                if (!touchedHoop && lastThrowerActorNumber != -1)
+                {
+                    if (BasketballGameManager.Instance != null && PhotonNetwork.IsMasterClient)
+                    {
+                        BasketballGameManager.Instance.HandleMiss(lastThrowerActorNumber, this);
+                    }
+                    else if (BasketballGameManager.Instance != null && !PhotonNetwork.IsMasterClient)
+                    {
+                        photonView.RPC("RPC_MasterHandleMiss", RpcTarget.MasterClient, lastThrowerActorNumber);
+                    }
+                    
+                    lastThrowerActorNumber = -1;
+                    bounceCount = 0;
+                    isPenaltyBall = false;
+                    UpdateVisuals();
+                    
+                    return;
+                }
 
-        PlayerController player = collision.gameObject.GetComponent<PlayerController>();
-        TryPickup(player);
+                bounceCount++;
+                
+                if (isPenaltyBall && bounceCount < 3)
+                {
+                    isPenaltyBall = false;
+                    UpdateVisuals();
+                }
+
+                if (bounceCount >= 3 && !isPenaltyBall)
+                {
+                    isPenaltyBall = true;
+                    UpdateVisuals();
+                }
+            }
+        }
     }
+
+    [PunRPC]
+    public void RPC_MasterHandleMiss(int actorNumber)
+    {
+        if (PhotonNetwork.IsMasterClient && BasketballGameManager.Instance != null)
+        {
+            BasketballGameManager.Instance.HandleMiss(actorNumber, this);
+        }
+    }
+
+    [PunRPC]
+    public void RPC_SpawnFloatingText(string text, float r, float g, float b, float x, float y, float z)
+    {
+        if (BasketballGameManager.Instance != null && BasketballGameManager.Instance.floatingTextPrefab != null)
+        {
+            GameObject textObj = Instantiate(BasketballGameManager.Instance.floatingTextPrefab, new Vector3(x, y, z), Quaternion.identity);
+            FloatingText ft = textObj.GetComponent<FloatingText>();
+            if (ft != null)
+            {
+                ft.Initialize(text, new Color(r, g, b));
+            }
+        }
+    }
+
 
     private void OnTriggerEnter(Collider other)
     {
         if (isHeld) return;
 
         PlayerController player = other.GetComponent<PlayerController>();
-        TryPickup(player);
-    }
-
-    private float lastPickupRequestTime = 0f;
-
-    public void TryPickup(PlayerController player)
-    {
-        if (player != null && player.photonView.IsMine && !player.hasBall && !isHeld)
+        if (player != null && player.photonView.IsMine && !player.hasBall)
         {
-            if (Time.time - lastPickupRequestTime < 0.5f) return;
-            lastPickupRequestTime = Time.time;
-
+            photonView.RequestOwnership();
             photonView.RPC("RPC_PickupBall", RpcTarget.All, player.photonView.ViewID);
         }
     }
 
-    [PunRPC]
-    public void RPC_PickupBall(int playerViewID)
+    public void TryPickup(PlayerController player)
     {
         if (isHeld) return;
 
+        if (player != null && player.photonView.IsMine && !player.hasBall)
+        {
+            photonView.RequestOwnership();
+            photonView.RPC("RPC_PickupBall", RpcTarget.All, player.photonView.ViewID);
+        }
+    }
+
+
+    [PunRPC]
+    public void RPC_PickupBall(int playerViewID)
+    {
         PhotonView playerView = PhotonView.Find(playerViewID);
         if (playerView != null)
         {
@@ -75,12 +146,14 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             {
                 isHeld = true;
                 rb.isKinematic = true;
-                rb.mass = 1f; // Reset ball mass to default
                 col.enabled = false;
-                bounceCount = 0;
 
-                PhotonTransformView ptv = GetComponent<PhotonTransformView>();
-                if (ptv != null) ptv.enabled = false;
+                isPenaltyBall = bounceCount >= 3;
+                UpdateVisuals();
+
+                bounceCount = 0;
+                touchedHoop = false;
+                lastThrowerActorNumber = -1;
 
                 Transform holdPoint = player.cameraTransform.Find("HoldPoint");
                 if (holdPoint == null) holdPoint = player.cameraTransform;
@@ -92,42 +165,23 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
                 player.hasBall = true;
                 player.heldBall = this;
                 currentHolder = player.transform;
-
-                if (player.photonView.IsMine)
-                {
-                    photonView.RequestOwnership();
-                }
             }
         }
     }
 
     [PunRPC]
-    public void RPC_ThrowBall(Vector3 throwForce, float massModifier = 1f, bool isFireBall = false)
+    public void RPC_ThrowBall(Vector3 throwForce, int actorNumber)
     {
         isHeld = false;
         transform.SetParent(null);
+        rb.isKinematic = false;
         col.enabled = true;
-
-        PhotonTransformView ptv = GetComponent<PhotonTransformView>();
-        if (ptv != null) ptv.enabled = true;
-
-        rb.mass = massModifier; // Apply heavy or light modifier
-
-        if (isFireBall)
-        {
-            // Activate fire particle system if exists
-            // Set 4 point score flag
-            Debug.Log("Ball is on FIRE!");
-        }
+        
+        lastThrowerActorNumber = actorNumber;
 
         if (photonView.IsMine)
         {
-            rb.isKinematic = false;
             rb.AddForce(throwForce, ForceMode.Impulse);
-        }
-        else
-        {
-            rb.isKinematic = true;
         }
 
         if (currentHolder != null)
@@ -138,20 +192,32 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
+    [PunRPC]
+    public void RPC_ResetBallState()
+    {
+        touchedHoop = false;
+        lastThrowerActorNumber = -1;
+        bounceCount = 0;
+        isPenaltyBall = false;
+        UpdateVisuals();
+    }
+
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)
         {
             stream.SendNext(bounceCount);
+            stream.SendNext(isPenaltyBall);
         }
         else
         {
-            int receivedBounces = (int)stream.ReceiveNext();
-            if (!isHeld)
+            bounceCount = (int)stream.ReceiveNext();
+            bool wasPenalty = isPenaltyBall;
+            isPenaltyBall = (bool)stream.ReceiveNext();
+            if (wasPenalty != isPenaltyBall)
             {
-                bounceCount = receivedBounces;
+                UpdateVisuals();
             }
         }
     }
-}      
-    
+}

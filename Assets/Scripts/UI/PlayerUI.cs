@@ -1,62 +1,79 @@
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class PlayerUI : MonoBehaviour
 {
-    public GameObject powerBarContainer;
+    public PlayerController targetPlayer;
+    public GameObject uiContainer;
     public Image powerBarFill;
+    public TMPro.TextMeshProUGUI hostScoreText;
+    public TMPro.TextMeshProUGUI clientScoreText;
 
     private void Start()
     {
-        if (powerBarContainer == null)
+        if (uiContainer == null) uiContainer = gameObject;
+        if (powerBarFill == null) 
         {
             Transform bg = transform.Find("PowerBarBg");
             if (bg != null)
             {
-                powerBarContainer = bg.gameObject;
+                Transform fill = bg.Find("PowerBarFill");
+                if (fill != null) powerBarFill = fill.GetComponent<UnityEngine.UI.Image>();
             }
         }
-
-        if (powerBarFill == null) 
+        if (hostScoreText == null)
         {
-            Transform bg = powerBarContainer != null ? powerBarContainer.transform : transform.Find("PowerBarBg");
-            if (bg != null)
-            {
-                Transform fill = bg.Find("PowerBarFill");
-                if (fill != null) powerBarFill = fill.GetComponent<Image>();
-            }
+            Transform hostT = transform.Find("HostScoreText");
+            if (hostT != null) hostScoreText = hostT.GetComponent<TMPro.TextMeshProUGUI>();
+        }
+        if (clientScoreText == null)
+        {
+            Transform clientT = transform.Find("ClientScoreText");
+            if (clientT != null) clientScoreText = clientT.GetComponent<TMPro.TextMeshProUGUI>();
         }
     }
 
     private void Update()
     {
-        PlayerController localPlayer = PlayerController.Local;
-
-        if (localPlayer == null)
+        if (targetPlayer == null) 
         {
-            if (powerBarContainer != null && powerBarContainer.activeSelf)
-                powerBarContainer.SetActive(false);
-            else if (powerBarFill != null && powerBarFill.gameObject.activeSelf)
-                powerBarFill.gameObject.SetActive(false);
-            return;
+            targetPlayer = PlayerController.Local;
+            if (targetPlayer == null) return;
         }
+
+        if (!uiContainer.activeSelf) uiContainer.SetActive(true);
 
         if (powerBarFill != null)
         {
-            powerBarFill.fillAmount = localPlayer.chargePower / localPlayer.maxChargePower;
+            powerBarFill.fillAmount = targetPlayer.chargePower / targetPlayer.maxChargePower;
+            
+            if (powerBarFill.transform.parent != null)
+            {
+                powerBarFill.transform.parent.gameObject.SetActive(targetPlayer.isCharging);
+            }
         }
-        
-        bool shouldShow = localPlayer.hasBall && localPlayer.isCharging;
-        
-        if (powerBarContainer != null)
+
+        UpdateScores();
+    }
+
+    private void UpdateScores()
+    {
+        if (PhotonNetwork.CurrentRoom == null) return;
+
+        Photon.Realtime.Player host = PhotonNetwork.CurrentRoom.GetPlayer(1);
+        Photon.Realtime.Player client = PhotonNetwork.CurrentRoom.GetPlayer(2);
+
+        if (hostScoreText != null && host != null)
         {
-            if (powerBarContainer.activeSelf != shouldShow)
-                powerBarContainer.SetActive(shouldShow);
+            int hostScore = host.CustomProperties.ContainsKey("Score") ? (int)host.CustomProperties["Score"] : 0;
+            hostScoreText.text = $"<color=#0000FF>{hostScore}</color>";
         }
-        else if (powerBarFill != null)
+
+        if (clientScoreText != null && client != null)
         {
-            if (powerBarFill.gameObject.activeSelf != shouldShow)
-                powerBarFill.gameObject.SetActive(shouldShow);
+            int clientScore = client.CustomProperties.ContainsKey("Score") ? (int)client.CustomProperties["Score"] : 0;
+            clientScoreText.text = $"<color=#FF0000>{clientScore}</color>";
         }
     }
 }

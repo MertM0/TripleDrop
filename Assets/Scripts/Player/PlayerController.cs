@@ -67,20 +67,12 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
     private void Update()
     {
-        if (!photonView.IsMine)
-        {
-            if (cameraTransform != null)
-            {
-                cameraPitch = Mathf.Lerp(cameraPitch, targetCameraPitch, Time.deltaTime * 15f);
-                cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
-            }
-            return;
-        }
+        if (!photonView.IsMine) return;
 
         HandleMovement();
         HandleLook();
 
-        if (hasBall && isCharging)
+        if (isCharging && hasBall)
         {
             chargePower += Time.deltaTime * chargeSpeed;
             chargePower = Mathf.Clamp(chargePower, 0f, maxChargePower);
@@ -168,19 +160,12 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         if (heldBall != null && photonView.IsMine)
         {
             Vector3 throwDir = cameraTransform.forward;
-            float force = Mathf.Lerp(5f, 25f, power / maxChargePower) * powerUpController.ThrowPowerMultiplier;
-
-            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, throwDir * force, powerUpController.BallMassMultiplier, powerUpController.IsFireBallActive);
+            float force = Mathf.Lerp(5f, 25f, power / maxChargePower);
             
-            // Consume single-use fire ball modifier
-            if (powerUpController.IsFireBallActive)
-            {
-                powerUpController.ConsumeFireBall();
-            }
-
+            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, throwDir * force, photonView.Owner.ActorNumber);
             heldBall = null;
         }
-
+        
         Debug.Log($"Threw ball with power: {power}");
     }
 
@@ -213,4 +198,8 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
     [HideInInspector]
     public BallController heldBall;
+
+
+
+
 }

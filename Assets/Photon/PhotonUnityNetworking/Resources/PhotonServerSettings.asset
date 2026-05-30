@@ -28,7 +28,7 @@ MonoBehaviour:
     AuthMode: 0
     EnableLobbyStatistics: 0
     NetworkLogging: 1
-  DevRegion: 
+  DevRegion: tr
   PunLogging: 0
   EnableSupportLogger: 0
   RunInBackground: 1
@@ -47,6 +47,9 @@ MonoBehaviour:
   - RPC_ActivatePowerUp
   - RPC_CollectPowerUp
   - RPC_ConsumeFireBall
+  - RPC_MasterHandleMiss
+  - RPC_ResetBallState
+  - RPC_SpawnFloatingText
   DisableAutoOpenWizard: 1
   ShowSettings: 1
-  DevRegionSetOnce: 0
+  DevRegionSetOnce: 1
