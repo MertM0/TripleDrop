@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using Photon.Pun;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
@@ -15,29 +16,28 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
 
     private bool hasSpawned = false;
 
-    private void Start()
+#if UNITY_EDITOR
+    private void Update()
     {
-        if (PhotonNetwork.IsConnectedAndReady)
+        if (UnityEngine.InputSystem.Keyboard.current.endKey.wasPressedThisFrame && PhotonNetwork.InRoom)
         {
-            if (PhotonNetwork.InRoom)
-            {
-                SpawnGameObjects();
-            }
-            else
-            {
-                PhotonNetwork.JoinRandomOrCreateRoom();
-            }
-        }
-        else
-        {
-            Debug.Log("Not connected to Photon. Connecting automatically for testing...");
-            PhotonNetwork.ConnectUsingSettings();
+            PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { "Score", 50 } });
+            Debug.Log("[CHEAT] Win triggered.");
         }
     }
+#endif
 
-    public override void OnConnectedToMaster()
+    private void Start()
     {
-        PhotonNetwork.JoinRandomOrCreateRoom();
+        StartCoroutine(SpawnWhenReady());
+    }
+
+    private IEnumerator SpawnWhenReady()
+    {
+        // Photon pauses the network during scene loading, so IsConnectedAndReady
+        // can be false even though InRoom becomes true shortly after. Wait for both.
+        yield return new WaitUntil(() => PhotonNetwork.InRoom && PhotonNetwork.IsConnectedAndReady);
+        SpawnGameObjects();
     }
 
     public override void OnJoinedRoom()
@@ -55,11 +55,60 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
 
         if (PhotonNetwork.IsMasterClient)
         {
-            PhotonNetwork.Instantiate("Ball", spawnPos + Vector3.forward * 2f, Quaternion.identity);
+            GameObject ballObj = PhotonNetwork.Instantiate("Ball", spawnPos + Vector3.forward * 2f, Quaternion.identity);
+            // Give ball to RPS winner once their PlayerController has actually spawned over the network
+            StartCoroutine(GiveBallToRPSWinner(ballObj.GetComponent<BallController>()));
         }
-        
+
         Hashtable props = new Hashtable { { "Score", 0 } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    private IEnumerator GiveBallToRPSWinner(BallController ball)
+    {
+        if (ball == null) yield break;
+
+        object winnerActorObj;
+        if (!PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("RPSWinner", out winnerActorObj))
+        {
+            Debug.LogWarning("BasketballGameManager: No RPSWinner found in room properties. Ball not assigned.");
+            yield break;
+        }
+
+        int winnerActorNumber = (int)winnerActorObj;
+        if (winnerActorNumber <= 0) yield break;
+
+        // Poll until the winner's PlayerController has actually spawned over the network,
+        // instead of assuming a fixed delay. Times out so we never hang.
+        PlayerController winnerPc = null;
+        float timeout = 5f;
+        while (timeout > 0f && winnerPc == null)
+        {
+            foreach (PlayerController pc in FindObjectsByType<PlayerController>(FindObjectsSortMode.None))
+            {
+                if (pc.photonView.Owner != null && pc.photonView.Owner.ActorNumber == winnerActorNumber)
+                {
+                    winnerPc = pc;
+                    break;
+                }
+            }
+            if (winnerPc != null) break;
+            yield return new WaitForSeconds(0.1f);
+            timeout -= 0.1f;
+        }
+
+        if (ball == null) yield break; // ball may have been destroyed during the wait
+
+        if (winnerPc != null)
+        {
+            int winnerViewID = winnerPc.photonView.ViewID;
+            ball.photonView.RPC("RPC_PickupBall", RpcTarget.All, winnerViewID);
+            Debug.Log($"BasketballGameManager: Ball given to RPS winner (Actor {winnerActorNumber}, ViewID {winnerViewID})");
+        }
+        else
+        {
+            Debug.LogWarning($"BasketballGameManager: Could not find PlayerController for RPS winner actor {winnerActorNumber} within timeout.");
+        }
     }
 
     public override void OnPlayerPropertiesUpdate(Photon.Realtime.Player targetPlayer, Hashtable changedProps)
@@ -71,7 +120,18 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
 
             if (score >= 50)
             {
-                Debug.Log($"Player {targetPlayer.ActorNumber} WINS!");
+                Debug.Log($"Player {targetPlayer.ActorNumber} WINS with {score} points!");
+
+                // Show end game UI for local player
+                if (EndGameUIManager.Instance != null)
+                {
+                    bool localPlayerWon = targetPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber;
+                    EndGameUIManager.Instance.ShowEndGame(localPlayerWon);
+                }
+                else
+                {
+                    Debug.LogWarning("BasketballGameManager: EndGameUIManager.Instance is null!");
+                }
             }
         }
     }
@@ -86,13 +146,20 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
             if (player != null)
             {
                 int currentScore = player.CustomProperties.ContainsKey("Score") ? (int)player.CustomProperties["Score"] : 0;
-                int pointsToAdd = ball.isPenaltyBall ? 1 : 2;
+                int pointsToAdd = ball.isFireBall ? 3 : (ball.isPenaltyBall ? 1 : 2);
                 currentScore += pointsToAdd;
 
                 player.SetCustomProperties(new Hashtable { { "Score", currentScore } });
                 Debug.Log($"Player {ball.lastThrowerActorNumber} Scored {pointsToAdd} points!");
 
-                ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, $"+{pointsToAdd}", 0f, 1f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                if (ball.isFireBall)
+                {
+                    ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, "+3 FIRE!", 1f, 0.3f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                }
+                else
+                {
+                    ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, $"+{pointsToAdd}", 0f, 1f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                }
             }
             
             ball.photonView.RPC("RPC_ResetBallState", RpcTarget.All);

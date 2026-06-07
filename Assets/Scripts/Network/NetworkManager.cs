@@ -77,10 +77,10 @@ public class NetworkManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        Debug.Log("Joined Room. Loading SampleScene...");
+        Debug.Log("Joined Room. Loading LobbyScene...");
         if (PhotonNetwork.IsMasterClient)
         {
-            PhotonNetwork.LoadLevel("SampleScene");
+            PhotonNetwork.LoadLevel("LobbyScene");
         }
     }
 
