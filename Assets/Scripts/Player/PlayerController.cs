@@ -160,9 +160,19 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         if (heldBall != null && photonView.IsMine)
         {
             Vector3 throwDir = cameraTransform.forward;
-            float force = Mathf.Lerp(5f, 25f, power / maxChargePower);
+            float force = Mathf.Lerp(5f, 25f, power / maxChargePower) * powerUpController.ThrowPowerMultiplier;
             
-            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, throwDir * force, photonView.Owner.ActorNumber);
+            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, 
+                throwDir * force, 
+                photonView.Owner.ActorNumber, 
+                powerUpController.BallMassMultiplier, 
+                powerUpController.IsFireBallActive);
+
+            if (powerUpController.IsFireBallActive)
+            {
+                powerUpController.ConsumeFireBall();
+            }
+            
             heldBall = null;
         }
         

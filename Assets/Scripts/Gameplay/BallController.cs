@@ -10,11 +10,17 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     public bool isPenaltyBall = false;
     public bool touchedHoop = false;
     public int lastThrowerActorNumber = -1;
+    public bool isFireBall = false;
 
     private Rigidbody rb;
     private SphereCollider col;
     private Transform currentHolder;
     private MeshRenderer meshRenderer;
+    private float baseMass = 1f;
+    private MaterialPropertyBlock ballPropBlock;
+    // Tint both URP (_BaseColor) and Built-in (_Color) so it applies regardless of the ball shader.
+    private static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
+    private static readonly int ColorID = Shader.PropertyToID("_Color");
 
     [Header("Materials")]
     public Material orangeMat;
@@ -25,15 +31,41 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         rb = GetComponent<Rigidbody>();
         col = GetComponent<SphereCollider>();
         meshRenderer = GetComponent<MeshRenderer>();
+        if (rb != null)
+        {
+            baseMass = rb.mass;
+        }
         UpdateVisuals();
     }
 
     private void UpdateVisuals()
     {
-        if (meshRenderer != null)
+        if (meshRenderer == null) return;
+        if (ballPropBlock == null) ballPropBlock = new MaterialPropertyBlock();
+
+        // Swap the SHARED material (no per-renderer instance -> no leak, keeps batching)
+        // and apply the tint through a MaterialPropertyBlock instead of cloning .material.
+        Material targetMat;
+        Color tint;
+
+        if (isFireBall)
         {
-            meshRenderer.material = isPenaltyBall ? yellowMat : orangeMat;
+            targetMat = orangeMat;
+            tint = new Color(1f, 0.3f, 0f);
         }
+        else
+        {
+            targetMat = isPenaltyBall ? yellowMat : orangeMat;
+            tint = Color.white;
+        }
+
+        if (targetMat != null)
+            meshRenderer.sharedMaterial = targetMat;
+
+        meshRenderer.GetPropertyBlock(ballPropBlock);
+        ballPropBlock.SetColor(BaseColorID, tint);
+        ballPropBlock.SetColor(ColorID, tint);
+        meshRenderer.SetPropertyBlock(ballPropBlock);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -149,6 +181,11 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
                 col.enabled = false;
 
                 isPenaltyBall = bounceCount >= 3;
+                isFireBall = false;
+                if (rb != null)
+                {
+                    rb.mass = baseMass;
+                }
                 UpdateVisuals();
 
                 bounceCount = 0;
@@ -170,7 +207,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     }
 
     [PunRPC]
-    public void RPC_ThrowBall(Vector3 throwForce, int actorNumber)
+    public void RPC_ThrowBall(Vector3 throwForce, int actorNumber, float massMultiplier, bool isFire)
     {
         isHeld = false;
         transform.SetParent(null);
@@ -178,6 +215,14 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         col.enabled = true;
         
         lastThrowerActorNumber = actorNumber;
+        isFireBall = isFire;
+
+        if (rb != null)
+        {
+            rb.mass = baseMass * massMultiplier;
+        }
+
+        UpdateVisuals();
 
         if (photonView.IsMine)
         {
@@ -199,6 +244,11 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         lastThrowerActorNumber = -1;
         bounceCount = 0;
         isPenaltyBall = false;
+        isFireBall = false;
+        if (rb != null)
+        {
+            rb.mass = baseMass;
+        }
         UpdateVisuals();
     }
 
@@ -208,13 +258,16 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         {
             stream.SendNext(bounceCount);
             stream.SendNext(isPenaltyBall);
+            stream.SendNext(isFireBall);
         }
         else
         {
             bounceCount = (int)stream.ReceiveNext();
             bool wasPenalty = isPenaltyBall;
             isPenaltyBall = (bool)stream.ReceiveNext();
-            if (wasPenalty != isPenaltyBall)
+            bool wasFire = isFireBall;
+            isFireBall = (bool)stream.ReceiveNext();
+            if (wasPenalty != isPenaltyBall || wasFire != isFireBall)
             {
                 UpdateVisuals();
             }
