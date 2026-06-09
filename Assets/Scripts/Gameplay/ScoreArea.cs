@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class ScoreArea : MonoBehaviour
 {
+    [Header("VFX Settings")]
+    public Transform vfxSpawnPoint;
+
     private void OnTriggerEnter(Collider other)
     {
         BallController ball = other.GetComponent<BallController>();
@@ -9,7 +12,8 @@ public class ScoreArea : MonoBehaviour
         {
             if (BasketballGameManager.Instance != null)
             {
-                BasketballGameManager.Instance.HandleScore(ball);
+                Vector3 spawnPos = vfxSpawnPoint != null ? vfxSpawnPoint.position : transform.position;
+                BasketballGameManager.Instance.HandleScore(ball, spawnPos);
             }
         }
     }

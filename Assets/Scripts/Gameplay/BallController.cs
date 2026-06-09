@@ -38,6 +38,15 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         UpdateVisuals();
     }
 
+    private void Update()
+    {
+        if (isHeld && currentHolder != null)
+        {
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+        }
+    }
+
     private void UpdateVisuals()
     {
         if (meshRenderer == null) return;
@@ -177,6 +186,8 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             if (player != null)
             {
                 isHeld = true;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
                 rb.isKinematic = true;
                 col.enabled = false;
 

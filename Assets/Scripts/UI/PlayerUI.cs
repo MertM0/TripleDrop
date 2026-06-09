@@ -7,12 +7,12 @@ public class PlayerUI : MonoBehaviour
     public PlayerController targetPlayer;
     public GameObject uiContainer;
     public Image powerBarFill;
+    public GameObject powerBarBg;
     public TMPro.TextMeshProUGUI hostScoreText;
     public TMPro.TextMeshProUGUI clientScoreText;
 
     private int lastHostScore = int.MinValue;
     private int lastClientScore = int.MinValue;
-    private bool lastCharging = false;
 
     private void Start()
     {
@@ -22,6 +22,7 @@ public class PlayerUI : MonoBehaviour
             Transform bg = transform.Find("PowerBarBg");
             if (bg != null)
             {
+                if (powerBarBg == null) powerBarBg = bg.gameObject;
                 Transform fill = bg.Find("PowerBarFill");
                 if (fill != null) powerBarFill = fill.GetComponent<UnityEngine.UI.Image>();
             }
@@ -50,16 +51,18 @@ public class PlayerUI : MonoBehaviour
 
         if (powerBarFill != null)
         {
-            bool charging = targetPlayer.isCharging;
-            Transform barParent = powerBarFill.transform.parent;
-            if (barParent != null && lastCharging != charging)
+            powerBarFill.fillAmount = targetPlayer.chargePower / targetPlayer.maxChargePower;
+            if (powerBarFill.gameObject.activeSelf != targetPlayer.isCharging)
             {
-                barParent.gameObject.SetActive(charging);
-                lastCharging = charging;
+                powerBarFill.gameObject.SetActive(targetPlayer.isCharging);
             }
-            if (charging)
+        }
+
+        if (powerBarBg != null)
+        {
+            if (powerBarBg.activeSelf != targetPlayer.isCharging)
             {
-                powerBarFill.fillAmount = targetPlayer.chargePower / targetPlayer.maxChargePower;
+                powerBarBg.SetActive(targetPlayer.isCharging);
             }
         }
 

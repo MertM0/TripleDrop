@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 113573032857642227}
   - component: {fileID: 9187219889622514881}
+  - component: {fileID: 4155793549066895889}
   m_Layer: 0
   m_Name: BasketballGameManager
   m_TagString: Untagged
@@ -45,6 +46,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BasketballGameManager
   spawnPoint: {fileID: 0}
+  floatingTextPrefab: {fileID: 3973993754736755142, guid: 216244e9dfc19d74b830fbe665229410, type: 3}
+  vfx1PointPrefab: {fileID: 8752995832486103614, guid: e2ff3f927e3e20e43b3c31ed0a9d37d4, type: 3}
+  vfx2PointPrefab: {fileID: 7441952060094079471, guid: 7a94aae8f6f04d840ab4e257a90d2d64, type: 3}
+  vfx3PointPrefab: {fileID: 7514048020880031436, guid: ca3fc0b741c442c43b82f0581c7ca162, type: 3}
+--- !u!114 &4155793549066895889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2373684730847591442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &4586182284959122929
 GameObject:
   m_ObjectHideFlags: 0
@@ -137,27 +164,37 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TripleDrop.PowerUps.PowerUpGenerator
   powerUpSettings:
   - powerUpType: 0
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 1
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 2
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 3
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 4
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 5
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 6
+    prefabName: 
     spawnWeight: 10
   - powerUpType: 7
+    prefabName: 
     spawnWeight: 5
   - powerUpType: 8
+    prefabName: 
     spawnWeight: 5
   spawnAreaCenter: {x: 0, y: 0, z: 0}
   spawnAreaSize: {x: 10, y: 0, z: 10}
+  spawnHeight: 1
   spawnInterval: 15
-  powerUpPrefabName: PowerUp
+  maxConcurrentPowerUps: 2
 --- !u!1 &7073500331343572410
 GameObject:
   m_ObjectHideFlags: 0

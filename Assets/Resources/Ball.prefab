@@ -33,7 +33,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 50, y: 50, z: 50}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -45,7 +45,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1894230375256726355}
-  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 2342459666381787544, guid: ffe1a7d34c3d7cd40beb615ca74b0825, type: 3}
 --- !u!135 &2249716369051219914
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -65,7 +65,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.5
+  m_Radius: 0.004038915
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &2482796124808726999
 MeshRenderer:
@@ -93,6 +93,7 @@ MeshRenderer:
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 5f623e3e7d0c21f47abca1bb44fe4821, type: 2}
+  - {fileID: 2100000, guid: 594186f8882d2d5448c54c92f9e6c977, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -101,7 +102,7 @@ MeshRenderer:
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 1
   m_ReceiveGI: 1
-  m_PreserveUVs: 1
+  m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
   m_StitchLightmapSeams: 1
@@ -187,6 +188,8 @@ MonoBehaviour:
   isFireBall: 0
   orangeMat: {fileID: 2100000, guid: 5f623e3e7d0c21f47abca1bb44fe4821, type: 2}
   yellowMat: {fileID: 2100000, guid: 035587c2630619c4193c73bd4d7063ec, type: 2}
+  lastHeldActorNumber: -1
+  isValidScore: 1
 --- !u!114 &2829915743905616281
 MonoBehaviour:
   m_ObjectHideFlags: 0

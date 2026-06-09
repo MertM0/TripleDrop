@@ -8,6 +8,14 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
     public static BasketballGameManager Instance;
     public Transform spawnPoint;
 
+    [Header("UI & Visuals")]
+    public GameObject floatingTextPrefab;
+
+    [Header("Score VFX Prefabs")]
+    public GameObject vfx1PointPrefab;
+    public GameObject vfx2PointPrefab;
+    public GameObject vfx3PointPrefab;
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -136,7 +144,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
         }
     }
 
-    public void HandleScore(BallController ball)
+    public void HandleScore(BallController ball, Vector3 vfxPos)
     {
         if (!PhotonNetwork.IsMasterClient) return;
 
@@ -152,17 +160,53 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
                 player.SetCustomProperties(new Hashtable { { "Score", currentScore } });
                 Debug.Log($"Player {ball.lastThrowerActorNumber} Scored {pointsToAdd} points!");
 
+                string scoreText = "+" + pointsToAdd;
+                Color textColor = Color.white;
                 if (ball.isFireBall)
                 {
-                    ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, "+3 FIRE!", 1f, 0.3f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                    scoreText = "+3 FIRE!";
+                    textColor = new Color(1f, 0.3f, 0f);
                 }
-                else
+                else if (pointsToAdd == 2)
                 {
-                    ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, $"+{pointsToAdd}", 0f, 1f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                    textColor = Color.green;
                 }
+                else if (pointsToAdd == 1)
+                {
+                    textColor = Color.yellow;
+                }
+
+                ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, scoreText, textColor.r, textColor.g, textColor.b, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                photonView.RPC("RPC_SpawnScoreVFX", RpcTarget.All, pointsToAdd, vfxPos.x, vfxPos.y, vfxPos.z);
             }
             
             ball.photonView.RPC("RPC_ResetBallState", RpcTarget.All);
+        }
+    }
+
+    [PunRPC]
+    public void RPC_SpawnScoreVFX(int points, float x, float y, float z)
+    {
+        GameObject prefabToSpawn = null;
+        if (points == 1) prefabToSpawn = vfx1PointPrefab;
+        else if (points == 2) prefabToSpawn = vfx2PointPrefab;
+        else if (points >= 3) prefabToSpawn = vfx3PointPrefab;
+
+        if (prefabToSpawn != null)
+        {
+            GameObject vfxObj = Instantiate(prefabToSpawn, new Vector3(x, y, z), Quaternion.identity);
+
+            // Parent to ScoreArea if found (optional, since it has a fixed position anyway)
+            ScoreArea scoreArea = Object.FindAnyObjectByType<ScoreArea>();
+            if (scoreArea != null)
+            {
+                if (scoreArea.vfxSpawnPoint != null)
+                    vfxObj.transform.SetParent(scoreArea.vfxSpawnPoint, true);
+                else
+                    vfxObj.transform.SetParent(scoreArea.transform, true);
+            }
+
+            Destroy(vfxObj, 2f);
         }
     }
 
@@ -185,11 +229,4 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
             }
         }
     }
-
-
-
-
-
-    [Header("UI & Visuals")]
-    public GameObject floatingTextPrefab;
 }
