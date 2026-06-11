@@ -142,9 +142,10 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
     {
         if (!PhotonNetwork.IsMasterClient) return;
 
-        if (ball.lastThrowerActorNumber != -1)
+        int thrower = ball.lastThrowerActorNumber;
+        if (thrower != -1)
         {
-            Photon.Realtime.Player player = PhotonNetwork.CurrentRoom.GetPlayer(ball.lastThrowerActorNumber);
+            Photon.Realtime.Player player = PhotonNetwork.CurrentRoom.GetPlayer(thrower);
             if (player != null)
             {
                 int currentScore = player.CustomProperties.ContainsKey("Score") ? (int)player.CustomProperties["Score"] : 0;
@@ -152,7 +153,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
                 currentScore += pointsToAdd;
 
                 player.SetCustomProperties(new Hashtable { { "Score", currentScore } });
-                Debug.Log($"Player {ball.lastThrowerActorNumber} Scored {pointsToAdd} points!");
+                Debug.Log($"Player {thrower} Scored {pointsToAdd} points!");
 
                 string scoreText = "+" + pointsToAdd;
                 Color textColor = Color.white;
@@ -175,6 +176,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
             }
             
             ball.photonView.RPC("RPC_ResetBallState", RpcTarget.All);
+            ball.photonView.RPC("RPC_SetAllowedPickup", RpcTarget.All, thrower);
         }
     }
 

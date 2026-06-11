@@ -184,6 +184,7 @@ MonoBehaviour:
   isHeld: 0
   isPenaltyBall: 0
   touchedHoop: 0
+  enteredHoopFromBelow: 0
   lastThrowerActorNumber: -1
   isFireBall: 0
   orangeMat: {fileID: 2100000, guid: 5f623e3e7d0c21f47abca1bb44fe4821, type: 2}

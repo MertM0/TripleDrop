@@ -9,8 +9,10 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 
     public bool isPenaltyBall = false;
     public bool touchedHoop = false;
+    public bool enteredHoopFromBelow = false;
     public int lastThrowerActorNumber = -1;
     public bool isFireBall = false;
+    public int allowedPickupActor = -1;
 
     private Rigidbody rb;
     private SphereCollider col;
@@ -81,10 +83,17 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             return;
         }
 
+        enteredHoopFromBelow = false;
+
         if (!isHeld && !collision.gameObject.CompareTag("Player") && !collision.gameObject.CompareTag("Hoop"))
         {
             if (photonView.IsMine)
             {
+                if (lastThrowerActorNumber != -1 && allowedPickupActor == 0)
+                {
+                    photonView.RPC(nameof(RPC_HandleTurnover), RpcTarget.All, lastThrowerActorNumber);
+                }
+
                 if (!touchedHoop && lastThrowerActorNumber != -1)
                 {
                     if (BasketballGameManager.Instance != null && PhotonNetwork.IsMasterClient)
@@ -149,7 +158,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         if (isHeld) return;
 
         PlayerController player = other.GetComponent<PlayerController>();
-        if (player != null && player.photonView.IsMine && !player.hasBall)
+        if (player != null && player.photonView.IsMine && !player.hasBall && CanBePickedUpBy(player))
         {
             photonView.RequestOwnership();
             photonView.RPC("RPC_PickupBall", RpcTarget.All, player.photonView.ViewID);
@@ -160,10 +169,46 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     {
         if (isHeld) return;
 
-        if (player != null && player.photonView.IsMine && !player.hasBall)
+        if (player != null && player.photonView.IsMine && !player.hasBall && CanBePickedUpBy(player))
         {
             photonView.RequestOwnership();
             photonView.RPC("RPC_PickupBall", RpcTarget.All, player.photonView.ViewID);
+        }
+    }
+
+    private bool CanBePickedUpBy(PlayerController player)
+    {
+        if (allowedPickupActor == -1) return true;
+        return player.photonView.Owner != null && player.photonView.Owner.ActorNumber == allowedPickupActor;
+    }
+
+    [PunRPC]
+    public void RPC_HandleTurnover(int thrower)
+    {
+        if (lastThrowerActorNumber != thrower) return;
+        allowedPickupActor = FindOpponentActor(thrower);
+    }
+
+    [PunRPC]
+    public void RPC_SetAllowedPickup(int actor)
+    {
+        allowedPickupActor = actor;
+    }
+
+    private static int FindOpponentActor(int thrower)
+    {
+        foreach (Photon.Realtime.Player p in PhotonNetwork.PlayerList)
+        {
+            if (p.ActorNumber != thrower) return p.ActorNumber;
+        }
+        return -1;
+    }
+
+    public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+    {
+        if (allowedPickupActor == otherPlayer.ActorNumber)
+        {
+            allowedPickupActor = -1;
         }
     }
 
@@ -192,7 +237,9 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 
                 bounceCount = 0;
                 touchedHoop = false;
+                enteredHoopFromBelow = false;
                 lastThrowerActorNumber = -1;
+                allowedPickupActor = playerView.Owner != null ? playerView.Owner.ActorNumber : -1;
 
                 Transform holdPoint = player.cameraTransform.Find("HoldPoint");
                 if (holdPoint == null) holdPoint = player.cameraTransform;
@@ -218,6 +265,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 
         lastThrowerActorNumber = actorNumber;
         isFireBall = isFire;
+        allowedPickupActor = 0;
 
         if (rb != null)
         {
@@ -243,6 +291,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     public void RPC_ResetBallState()
     {
         touchedHoop = false;
+        enteredHoopFromBelow = false;
         lastThrowerActorNumber = -1;
         bounceCount = 0;
         isPenaltyBall = false;
@@ -261,6 +310,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             stream.SendNext(bounceCount);
             stream.SendNext(isPenaltyBall);
             stream.SendNext(isFireBall);
+            stream.SendNext(allowedPickupActor);
         }
         else
         {
@@ -269,6 +319,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             isPenaltyBall = (bool)stream.ReceiveNext();
             bool wasFire = isFireBall;
             isFireBall = (bool)stream.ReceiveNext();
+            allowedPickupActor = (int)stream.ReceiveNext();
             if (wasPenalty != isPenaltyBall || wasFire != isFireBall)
             {
                 UpdateVisuals();
