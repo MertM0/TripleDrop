@@ -46,8 +46,6 @@ namespace TripleDrop.Gameplay
             SetMyPresence(false);
         }
 
-        // ── Trigger ──────────────────────────────────────────────────────────
-
         private void OnTriggerEnter(Collider other)
         {
             PlayerController player = other.GetComponent<PlayerController>();
@@ -69,8 +67,6 @@ namespace TripleDrop.Gameplay
             PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { key, inArea } });
         }
 
-        // ── Photon callbacks ─────────────────────────────────────────────────
-
         public override void OnRoomPropertiesUpdate(Hashtable changedProps)
         {
             EvaluateArea();
@@ -78,11 +74,8 @@ namespace TripleDrop.Gameplay
 
         public override void OnPlayerLeftRoom(Player otherPlayer)
         {
-            // Temizle ve yeniden değerlendir
             EvaluateArea();
         }
-
-        // ── Mantık ───────────────────────────────────────────────────────────
 
         private void EvaluateArea()
         {
@@ -111,7 +104,7 @@ namespace TripleDrop.Gameplay
 
         private void BeginCountdown()
         {
-            if (countdownCoroutine != null) return; // zaten çalışıyor
+            if (countdownCoroutine != null) return;
             countdownCoroutine = StartCoroutine(CountdownRoutine());
         }
 
@@ -142,8 +135,6 @@ namespace TripleDrop.Gameplay
             countdownCoroutine = null;
             Debug.Log("LobbyReadyArea: Hazır!");
         }
-
-        // ── Yardımcılar ──────────────────────────────────────────────────────
 
         private void SetAreaColor(Color color)
         {

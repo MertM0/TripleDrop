@@ -42,8 +42,6 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
 
     private IEnumerator SpawnWhenReady()
     {
-        // Photon pauses the network during scene loading, so IsConnectedAndReady
-        // can be false even though InRoom becomes true shortly after. Wait for both.
         yield return new WaitUntil(() => PhotonNetwork.InRoom && PhotonNetwork.IsConnectedAndReady);
         SpawnGameObjects();
     }
@@ -64,7 +62,6 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
         if (PhotonNetwork.IsMasterClient)
         {
             GameObject ballObj = PhotonNetwork.Instantiate("Ball", spawnPos + Vector3.forward * 2f, Quaternion.identity);
-            // Give ball to RPS winner once their PlayerController has actually spawned over the network
             StartCoroutine(GiveBallToRPSWinner(ballObj.GetComponent<BallController>()));
         }
 
@@ -85,9 +82,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
 
         int winnerActorNumber = (int)winnerActorObj;
         if (winnerActorNumber <= 0) yield break;
-
-        // Poll until the winner's PlayerController has actually spawned over the network,
-        // instead of assuming a fixed delay. Times out so we never hang.
+        
         PlayerController winnerPc = null;
         float timeout = 5f;
         while (timeout > 0f && winnerPc == null)
@@ -105,7 +100,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
             timeout -= 0.1f;
         }
 
-        if (ball == null) yield break; // ball may have been destroyed during the wait
+        if (ball == null) yield break;
 
         if (winnerPc != null)
         {
@@ -129,8 +124,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
             if (score >= 50)
             {
                 Debug.Log($"Player {targetPlayer.ActorNumber} WINS with {score} points!");
-
-                // Show end game UI for local player
+                
                 if (EndGameUIManager.Instance != null)
                 {
                     bool localPlayerWon = targetPlayer.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber;
@@ -195,8 +189,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
         if (prefabToSpawn != null)
         {
             GameObject vfxObj = Instantiate(prefabToSpawn, new Vector3(x, y, z), Quaternion.identity);
-
-            // Parent to ScoreArea if found (optional, since it has a fixed position anyway)
+            
             ScoreArea scoreArea = Object.FindAnyObjectByType<ScoreArea>();
             if (scoreArea != null)
             {

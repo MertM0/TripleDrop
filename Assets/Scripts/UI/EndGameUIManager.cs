@@ -25,8 +25,6 @@ public class EndGameUIManager : MonoBehaviourPunCallbacks
     private const string WANTS_LOBBY_KEY = "WantsLobby";
     private const string BackLabelFormat = "Lobiye Dön ({0}/{1})";
 
-    // Back-to-lobby button labels, resolved at runtime (panels are inactive at Start,
-    // so we must include inactive children).
     private TextMeshProUGUI winBackLabel;
     private TextMeshProUGUI failBackLabel;
 
@@ -57,9 +55,6 @@ public class EndGameUIManager : MonoBehaviourPunCallbacks
         if (failExitButton != null) failExitButton.onClick.AddListener(OnExit);
     }
 
-    /// <summary>
-    /// Called by BasketballGameManager when a player reaches the score threshold.
-    /// </summary>
     public void ShowEndGame(bool isWinner)
     {
         Debug.Log($"EndGameUIManager: ShowEndGame called. IsWinner={isWinner}");
@@ -80,7 +75,6 @@ public class EndGameUIManager : MonoBehaviourPunCallbacks
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // Fresh confirmation state for this end-game round.
         PhotonNetwork.LocalPlayer.SetCustomProperties(new Hashtable { { WANTS_LOBBY_KEY, false } });
         SetBackButtonsInteractable(true);
         RefreshLobbyCount();
@@ -90,7 +84,6 @@ public class EndGameUIManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("EndGameUIManager: Back to Lobby confirmed. Waiting for all players...");
 
-        // This client confirms; the actual scene load waits until EVERYONE has confirmed.
         SetBackButtonsInteractable(false);
 
         Hashtable props = new Hashtable
@@ -115,7 +108,6 @@ public class EndGameUIManager : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
     {
-        // A leaving player lowers the required total; re-evaluate so a lone player isn't stuck.
         RefreshLobbyCount();
         TryLoadLobby();
     }
@@ -124,7 +116,6 @@ public class EndGameUIManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.IsMasterClient && AllPlayersWantLobby())
         {
-            // Reset shared room state, then everyone follows the master via AutomaticallySyncScene.
             PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { "RPSWinner", 0 } });
             Invoke(nameof(LoadLobbyScene), 0.5f);
         }

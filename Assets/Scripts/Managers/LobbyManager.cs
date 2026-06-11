@@ -26,8 +26,6 @@ public class LobbyManager : MonoBehaviourPunCallbacks
 
     private IEnumerator SpawnWhenReady()
     {
-        // Photon pauses the network during scene loading, so IsConnectedAndReady
-        // can be false even though InRoom becomes true shortly after. Wait for both.
         yield return new WaitUntil(() => PhotonNetwork.InRoom && PhotonNetwork.IsConnectedAndReady);
         SpawnLocalPlayer();
     }
@@ -37,11 +35,9 @@ public class LobbyManager : MonoBehaviourPunCallbacks
         if (hasSpawned) return;
         hasSpawned = true;
 
-        // Reset per-round state when entering lobby (IsReady + the end-game return vote)
         Hashtable resetProps = new Hashtable { { "IsReady", false }, { "WantsLobby", false } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(resetProps);
 
-        // Pick spawn point based on actor number (1 or 2)
         int spawnIndex = (PhotonNetwork.LocalPlayer.ActorNumber - 1) % spawnPoints.Length;
         Vector3 spawnPos = spawnPoints != null && spawnPoints.Length > spawnIndex && spawnPoints[spawnIndex] != null
             ? spawnPoints[spawnIndex].position
@@ -55,7 +51,6 @@ public class LobbyManager : MonoBehaviourPunCallbacks
     {
         if (!changedProps.ContainsKey("IsReady")) return;
 
-        // Check if ALL players in the room are ready
         bool allReady = true;
         foreach (Player player in PhotonNetwork.PlayerList)
         {
@@ -69,13 +64,11 @@ public class LobbyManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                // Property not set yet -> not ready
                 allReady = false;
                 break;
             }
         }
 
-        // Also require at least 2 players in the room
         if (allReady && PhotonNetwork.CurrentRoom.PlayerCount >= 2)
         {
             Debug.Log("LobbyManager: All players are ready! Starting RPS...");

@@ -6,7 +6,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 {
     public int bounceCount = 0;
     public bool isHeld = false;
-    
+
     public bool isPenaltyBall = false;
     public bool touchedHoop = false;
     public int lastThrowerActorNumber = -1;
@@ -18,9 +18,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     private MeshRenderer meshRenderer;
     private float baseMass = 1f;
     private MaterialPropertyBlock ballPropBlock;
-    // Tint both URP (_BaseColor) and Built-in (_Color) so it applies regardless of the ball shader.
-    private static readonly int BaseColorID = Shader.PropertyToID("_BaseColor");
-    private static readonly int ColorID = Shader.PropertyToID("_Color");
 
     [Header("Materials")]
     public Material orangeMat;
@@ -52,8 +49,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         if (meshRenderer == null) return;
         if (ballPropBlock == null) ballPropBlock = new MaterialPropertyBlock();
 
-        // Swap the SHARED material (no per-renderer instance -> no leak, keeps batching)
-        // and apply the tint through a MaterialPropertyBlock instead of cloning .material.
         Material targetMat;
         Color tint;
 
@@ -72,8 +67,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             meshRenderer.sharedMaterial = targetMat;
 
         meshRenderer.GetPropertyBlock(ballPropBlock);
-        ballPropBlock.SetColor(BaseColorID, tint);
-        ballPropBlock.SetColor(ColorID, tint);
         meshRenderer.SetPropertyBlock(ballPropBlock);
     }
 
@@ -102,17 +95,17 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
                     {
                         photonView.RPC("RPC_MasterHandleMiss", RpcTarget.MasterClient, lastThrowerActorNumber);
                     }
-                    
+
                     lastThrowerActorNumber = -1;
                     bounceCount = 0;
                     isPenaltyBall = false;
                     UpdateVisuals();
-                    
+
                     return;
                 }
 
                 bounceCount++;
-                
+
                 if (isPenaltyBall && bounceCount < 3)
                 {
                     isPenaltyBall = false;
@@ -151,7 +144,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         }
     }
 
-
     private void OnTriggerEnter(Collider other)
     {
         if (isHeld) return;
@@ -174,7 +166,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             photonView.RPC("RPC_PickupBall", RpcTarget.All, player.photonView.ViewID);
         }
     }
-
 
     [PunRPC]
     public void RPC_PickupBall(int playerViewID)
@@ -224,7 +215,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         transform.SetParent(null);
         rb.isKinematic = false;
         col.enabled = true;
-        
+
         lastThrowerActorNumber = actorNumber;
         isFireBall = isFire;
 

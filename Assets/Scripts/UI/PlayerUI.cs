@@ -76,8 +76,6 @@ public class PlayerUI : MonoBehaviour
         Photon.Realtime.Player host = PhotonNetwork.CurrentRoom.GetPlayer(1);
         Photon.Realtime.Player client = PhotonNetwork.CurrentRoom.GetPlayer(2);
 
-        // Only touch TextMeshPro when the value actually changes — avoids 2 string
-        // allocations every frame (and the associated TMP work) while idle.
         if (hostScoreText != null && host != null)
         {
             int hostScore = host.CustomProperties.ContainsKey("Score") ? (int)host.CustomProperties["Score"] : 0;

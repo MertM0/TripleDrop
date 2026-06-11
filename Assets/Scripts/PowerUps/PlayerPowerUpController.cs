@@ -20,7 +20,6 @@ namespace TripleDrop.PowerUps
         public float fireBallDuration = 10f;
         public float platformPanicDuration = 5f;
 
-        // Current active modifiers
         public float SpeedMultiplier { get; private set; } = 1f;
         public float JumpMultiplier { get; private set; } = 1f;
         public float ThrowPowerMultiplier { get; private set; } = 1f;
@@ -33,7 +32,6 @@ namespace TripleDrop.PowerUps
 
         public void ApplyPowerUp(PowerUpType type)
         {
-            // Sync activation to all clients
             photonView.RPC(nameof(RPC_ActivatePowerUp), RpcTarget.All, (int)type);
         }
 
@@ -44,7 +42,6 @@ namespace TripleDrop.PowerUps
 
             Debug.Log($"[PowerUp] Player {photonView.Owner.NickName} collected: {type}");
 
-            // Stop existing coroutine for this type to reset duration
             if (activePowerUps.ContainsKey(type) && activePowerUps[type] != null)
             {
                 StopCoroutine(activePowerUps[type]);
@@ -93,11 +90,6 @@ namespace TripleDrop.PowerUps
                 case PowerUpType.PlatformPanic:
                     IsPlatformPanicActive = true;
                     duration = platformPanicDuration;
-                    if (PhotonNetwork.IsMasterClient)
-                    {
-                        // Spawn a moving wall
-                        // PhotonNetwork.Instantiate("MovingWall", transform.position, Quaternion.identity);
-                    }
                     break;
             }
 

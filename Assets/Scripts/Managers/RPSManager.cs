@@ -16,7 +16,6 @@ public class RPSManager : MonoBehaviourPunCallbacks
     public Button paperButton;
     public Button scissorsButton;
 
-    // RPS choice constants
     private const int ROCK = 0;
     private const int PAPER = 1;
     private const int SCISSORS = 2;
@@ -37,9 +36,6 @@ public class RPSManager : MonoBehaviourPunCallbacks
             rpsPanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Called by LobbyManager when all players are ready.
-    /// </summary>
     public void StartRPS()
     {
         hasChosen = false;
@@ -84,7 +80,6 @@ public class RPSManager : MonoBehaviourPunCallbacks
     {
         if (!changedProps.ContainsKey(RPS_CHOICE_KEY)) return;
 
-        // Check if all players have made a choice (choice != -1)
         bool allChosen = true;
         foreach (Player player in PhotonNetwork.PlayerList)
         {
@@ -111,7 +106,6 @@ public class RPSManager : MonoBehaviourPunCallbacks
 
     private void EvaluateResult()
     {
-        // Collect choices
         Player[] players = PhotonNetwork.PlayerList;
         if (players.Length < 2) return;
 
@@ -125,16 +119,13 @@ public class RPSManager : MonoBehaviourPunCallbacks
 
         if (c1 == c2)
         {
-            // Draw
             Debug.Log("RPSManager: Draw! Restarting RPS...");
             if (statusText != null) statusText.text = "Draw! Choose again...";
 
-            // Reset choices and restart
             Invoke(nameof(ResetAndRestart), 1.5f);
         }
         else
         {
-            // Determine winner: Rock(0) beats Scissors(2), Paper(1) beats Rock(0), Scissors(2) beats Paper(1)
             bool p1Wins = (c1 == ROCK && c2 == SCISSORS) ||
                           (c1 == PAPER && c2 == ROCK) ||
                           (c1 == SCISSORS && c2 == PAPER);
@@ -145,7 +136,6 @@ public class RPSManager : MonoBehaviourPunCallbacks
             if (statusText != null)
                 statusText.text = $"Player {winner.ActorNumber} wins! Loading game...";
 
-            // Only MasterClient sets room property and loads scene
             if (PhotonNetwork.IsMasterClient)
             {
                 Hashtable roomProps = new Hashtable { { RPS_WINNER_KEY, winner.ActorNumber } };
