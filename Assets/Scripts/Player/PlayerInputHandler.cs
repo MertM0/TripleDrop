@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerInputHandler : MonoBehaviour
 {
     private InputSystem_Actions inputActions;
+    private InputAction escapeAction;
 
     public Vector2 MoveInput { get; private set; }
     public Vector2 LookInput { get; private set; }
@@ -17,6 +18,9 @@ public class PlayerInputHandler : MonoBehaviour
 
     public delegate void ThrowCanceledEvent();
     public event ThrowCanceledEvent OnThrowCanceledEvent;
+
+    public delegate void EscapeEvent();
+    public event EscapeEvent OnEscapeEvent;
 
     private void Awake()
     {
@@ -35,16 +39,21 @@ public class PlayerInputHandler : MonoBehaviour
 
         inputActions.Player.Attack.started += ctx => OnThrowStartedEvent?.Invoke();
         inputActions.Player.Attack.canceled += ctx => OnThrowCanceledEvent?.Invoke();
+
+        escapeAction = new InputAction("Escape", binding: "<Keyboard>/escape");
+        escapeAction.performed += ctx => OnEscapeEvent?.Invoke();
     }
 
     public void EnableInputs()
     {
         inputActions.Player.Enable();
+        escapeAction.Enable();
     }
 
     public void DisableInputs()
     {
         inputActions.Player.Disable();
+        escapeAction.Disable();
     }
 
     private void OnDestroy()
@@ -53,6 +62,11 @@ public class PlayerInputHandler : MonoBehaviour
         {
             inputActions.Player.Disable();
             inputActions.Dispose();
+        }
+        if (escapeAction != null)
+        {
+            escapeAction.Disable();
+            escapeAction.Dispose();
         }
     }
 }

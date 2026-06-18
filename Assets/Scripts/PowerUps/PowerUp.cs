@@ -23,6 +23,10 @@ namespace TripleDrop.PowerUps
         private PowerUpType type;
         private bool isCollected = false;
 
+        public AudioClip powerUpClip;
+        public float minPitch = 0.9f;
+        public float maxPitch = 1.1f;
+
         public void OnPhotonInstantiate(PhotonMessageInfo info)
         {
             object[] data = info.photonView.InstantiationData;
@@ -53,6 +57,10 @@ namespace TripleDrop.PowerUps
         private void RPC_CollectPowerUp()
         {
             isCollected = true;
+            if (powerUpClip != null)
+            {
+                SoundManager.Instance.PlaySFXAtPoint(powerUpClip, transform.position, 1f, minPitch, maxPitch);
+            }
             gameObject.SetActive(false);
             
             if (photonView.IsMine)

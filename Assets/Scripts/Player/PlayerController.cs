@@ -19,12 +19,23 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     public float maxChargePower = 100f;
     public float chargeSpeed = 30f;
 
+    [Header("Audio Settings")]
+    public AudioClip footstepClip;
+    public float walkStepInterval = 0.5f;
+    public float sprintStepInterval = 0.35f;
+    public float stepMinPitch = 0.85f;
+    public float stepMaxPitch = 1.15f;
+
     private CharacterController characterController;
     private PlayerInputHandler inputHandler;
     private PlayerPowerUpController powerUpController;
     private Vector3 velocity;
     private float cameraPitch = 0f;
     private float targetCameraPitch = 0f;
+
+    private AudioSource audioSource;
+    private Vector3 lastPosition;
+    private float stepTimer;
 
     public bool hasBall = false;
     public float chargePower = 0f;
@@ -37,21 +48,24 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         characterController = GetComponent<CharacterController>();
         inputHandler = GetComponent<PlayerInputHandler>();
         powerUpController = GetComponent<PlayerPowerUpController>();
+        audioSource = GetComponent<AudioSource>();
 
         inputHandler.OnJumpEvent += OnJump;
         inputHandler.OnThrowStartedEvent += OnThrowStarted;
         inputHandler.OnThrowCanceledEvent += OnThrowCanceled;
+        inputHandler.OnEscapeEvent += OnEscape;
     }
 
     private void Start()
     {
+        lastPosition = transform.position;
         if (!photonView.IsMine)
         {
             if (cameraTransform != null)
             {
                 Camera cam = cameraTransform.GetComponent<Camera>();
                 if (cam != null) cam.enabled = false;
-                
+
                 AudioListener audioListener = cameraTransform.GetComponent<AudioListener>();
                 if (audioListener != null) audioListener.enabled = false;
             }
@@ -70,12 +84,61 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         if (!photonView.IsMine) return;
 
         HandleMovement();
+        UpdateFootsteps();
         HandleLook();
 
         if (isCharging && hasBall)
         {
             chargePower += Time.deltaTime * chargeSpeed;
             chargePower = Mathf.Clamp(chargePower, 0f, maxChargePower);
+        }
+    }
+
+    private void UpdateFootsteps()
+    {
+        Vector3 currentPos = transform.position;
+        Vector3 horizontalMovement = currentPos - lastPosition;
+        horizontalMovement.y = 0f;
+        float speed = horizontalMovement.magnitude / Time.deltaTime;
+        lastPosition = currentPos;
+
+        bool isPlayerGrounded = false;
+        if (photonView.IsMine)
+        {
+            isPlayerGrounded = characterController.isGrounded;
+        }
+        else
+        {
+            isPlayerGrounded = Physics.Raycast(transform.position + Vector3.up * 0.1f, Vector3.down, 0.3f);
+        }
+
+        if (isPlayerGrounded && speed > 0.2f)
+        {
+            stepTimer -= Time.deltaTime;
+            if (stepTimer <= 0f)
+            {
+                bool isSprinting = false;
+                if (photonView.IsMine)
+                {
+                    isSprinting = inputHandler.IsSprinting;
+                }
+                else
+                {
+                    isSprinting = speed > moveSpeed * 1.1f;
+                }
+
+                float interval = isSprinting ? sprintStepInterval : walkStepInterval;
+                stepTimer = interval;
+
+                if (audioSource != null && footstepClip != null)
+                {
+                    SoundManager.Instance.PlaySFXOnSource(audioSource, footstepClip, 1f, stepMinPitch, stepMaxPitch);
+                }
+            }
+        }
+        else
+        {
+            stepTimer = 0f;
         }
     }
 
@@ -161,21 +224,21 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
         {
             Vector3 throwDir = cameraTransform.forward;
             float force = Mathf.Lerp(5f, 25f, power / maxChargePower) * powerUpController.ThrowPowerMultiplier;
-            
-            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All, 
-                throwDir * force, 
-                photonView.Owner.ActorNumber, 
-                powerUpController.BallMassMultiplier, 
+
+            heldBall.photonView.RPC("RPC_ThrowBall", RpcTarget.All,
+                throwDir * force,
+                photonView.Owner.ActorNumber,
+                powerUpController.BallMassMultiplier,
                 powerUpController.IsFireBallActive);
 
             if (powerUpController.IsFireBallActive)
             {
                 powerUpController.ConsumeFireBall();
             }
-            
+
             heldBall = null;
         }
-        
+
         Debug.Log($"Threw ball with power: {power}");
     }
 
@@ -208,6 +271,14 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
 
     [HideInInspector]
     public BallController heldBall;
+
+    private void OnEscape()
+    {
+        if (photonView.IsMine)
+        {
+            NetworkManager.Instance.ReturnToMainMenu();
+        }
+    }
 
 
 

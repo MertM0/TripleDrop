@@ -26,11 +26,34 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     public Material orangeMat;
     public Material yellowMat;
 
+    [Header("Audio Settings")]
+    public AudioClip bounceClip;
+    public AudioClip pickupClip;
+    public float minPitch = 0.9f;
+    public float maxPitch = 1.1f;
+
+    [Header("Score Sound Settings")]
+    public AudioClip scoreMinusOneClip;
+    public AudioClip scorePlusOneClip;
+    public AudioClip scorePlusTwoClip;
+    public AudioClip scorePlusThreeClip;
+
+    private AudioSource audioSource;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         col = GetComponent<SphereCollider>();
         meshRenderer = GetComponent<MeshRenderer>();
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+        {
+            audioSource = gameObject.AddComponent<AudioSource>();
+            audioSource.spatialBlend = 1f;
+            audioSource.minDistance = 2f;
+            audioSource.maxDistance = 30f;
+            audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
+        }
         if (rb != null)
         {
             baseMass = rb.mass;
@@ -75,6 +98,15 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 
     private void OnCollisionEnter(Collision collision)
     {
+        if (photonView.IsMine)
+        {
+            float force = collision.relativeVelocity.magnitude;
+            if (force > 0.5f)
+            {
+                photonView.RPC(nameof(RPC_PlayBounceSound), RpcTarget.All, force);
+            }
+        }
+
         if (collision.gameObject.CompareTag("Hoop"))
         {
             if (photonView.IsMine)
@@ -139,6 +171,16 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     }
 
     [PunRPC]
+    public void RPC_PlayBounceSound(float force)
+    {
+        if (audioSource != null && bounceClip != null)
+        {
+            float volume = Mathf.Clamp(force / 10f, 0.15f, 1f);
+            SoundManager.Instance.PlaySFXOnSource(audioSource, bounceClip, volume, minPitch, maxPitch);
+        }
+    }
+
+    [PunRPC]
     public void RPC_MasterHandleMiss(int actorNumber)
     {
         if (PhotonNetwork.IsMasterClient && BasketballGameManager.Instance != null)
@@ -148,7 +190,7 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     }
 
     [PunRPC]
-    public void RPC_SpawnFloatingText(string text, float r, float g, float b, float x, float y, float z)
+    public void RPC_SpawnFloatingText(string text, float r, float g, float b, float x, float y, float z, int points)
     {
         if (BasketballGameManager.Instance != null && BasketballGameManager.Instance.floatingTextPrefab != null)
         {
@@ -158,6 +200,28 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             {
                 ft.Initialize(text, new Color(r, g, b));
             }
+        }
+
+        AudioClip targetClip = null;
+        switch (points)
+        {
+            case -1:
+                targetClip = scoreMinusOneClip;
+                break;
+            case 1:
+                targetClip = scorePlusOneClip;
+                break;
+            case 2:
+                targetClip = scorePlusTwoClip;
+                break;
+            case 3:
+                targetClip = scorePlusThreeClip;
+                break;
+        }
+
+        if (targetClip != null)
+        {
+            SoundManager.Instance.PlaySFXAtPoint(targetClip, new Vector3(x, y, z), 1f, minPitch, maxPitch);
         }
     }
 
@@ -260,6 +324,11 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
                 player.hasBall = true;
                 player.heldBall = this;
                 currentHolder = player.transform;
+
+                if (audioSource != null && pickupClip != null)
+                {
+                    SoundManager.Instance.PlaySFXOnSource(audioSource, pickupClip, 1f, minPitch, maxPitch);
+                }
             }
         }
     }

@@ -171,7 +171,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
                     textColor = Color.yellow;
                 }
 
-                ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, scoreText, textColor.r, textColor.g, textColor.b, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, scoreText, textColor.r, textColor.g, textColor.b, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z, pointsToAdd);
                 photonView.RPC("RPC_SpawnScoreVFX", RpcTarget.All, pointsToAdd, vfxPos.x, vfxPos.y, vfxPos.z);
             }
             
@@ -220,7 +220,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
 
             if (ball != null)
             {
-                ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, "-1", 1f, 0f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z);
+                ball.photonView.RPC("RPC_SpawnFloatingText", RpcTarget.All, "-1", 1f, 0f, 0f, ball.transform.position.x, ball.transform.position.y, ball.transform.position.z, -1);
             }
         }
     }

@@ -88,4 +88,28 @@ public class NetworkManager : MonoBehaviourPunCallbacks
     {
         Debug.LogError($"Join Room Failed: {message}");
     }
+
+    public void ReturnToMainMenu()
+    {
+        if (PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
+        else
+        {
+            LoadMainMenuScene();
+        }
+    }
+
+    public override void OnLeftRoom()
+    {
+        LoadMainMenuScene();
+    }
+
+    private void LoadMainMenuScene()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+    }
 }

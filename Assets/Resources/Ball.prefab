@@ -191,6 +191,14 @@ MonoBehaviour:
   allowedPickupActor: -1
   orangeMat: {fileID: 2100000, guid: 5f623e3e7d0c21f47abca1bb44fe4821, type: 2}
   yellowMat: {fileID: 2100000, guid: 035587c2630619c4193c73bd4d7063ec, type: 2}
+  bounceClip: {fileID: 8300000, guid: c00a242633f0cac4a9fdea216cb41e45, type: 3}
+  pickupClip: {fileID: 8300000, guid: b6446df3cda2c9e4a8ba428fd2593e39, type: 3}
+  minPitch: 0.85
+  maxPitch: 1.15
+  scoreMinusOneClip: {fileID: 8300000, guid: df95bc74effa6d641b0f9cc20814035b, type: 3}
+  scorePlusOneClip: {fileID: 8300000, guid: b6446df3cda2c9e4a8ba428fd2593e39, type: 3}
+  scorePlusTwoClip: {fileID: 8300000, guid: d35e9e1d6f876ce4c95f1eb8177f15ab, type: 3}
+  scorePlusThreeClip: {fileID: 8300000, guid: 4d482c5e8f563c74caade79ab0920f67, type: 3}
 --- !u!114 &2829915743905616281
 MonoBehaviour:
   m_ObjectHideFlags: 0

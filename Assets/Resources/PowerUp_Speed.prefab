@@ -48,6 +48,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c089402ecbd842468c252253ae0e5f8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TripleDrop.PowerUps.PowerUp
+  powerUpClip: {fileID: 8300000, guid: 4d482c5e8f563c74caade79ab0920f67, type: 3}
+  minPitch: 0.9
+  maxPitch: 1.1
 --- !u!33 &1814510818703239509
 MeshFilter:
   m_ObjectHideFlags: 0
