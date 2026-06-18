@@ -149,7 +149,7 @@ public class BasketballGameManager : MonoBehaviourPunCallbacks
             if (player != null)
             {
                 int currentScore = player.CustomProperties.ContainsKey("Score") ? (int)player.CustomProperties["Score"] : 0;
-                int pointsToAdd = ball.isFireBall ? 3 : (ball.isPenaltyBall ? 1 : 2);
+                int pointsToAdd = ball.isFireBall ? 3 : (ball.thrownAsPenalty ? 1 : 2);
                 currentScore += pointsToAdd;
 
                 player.SetCustomProperties(new Hashtable { { "Score", currentScore } });

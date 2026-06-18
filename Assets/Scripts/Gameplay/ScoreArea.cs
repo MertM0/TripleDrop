@@ -6,6 +6,9 @@ public class ScoreArea : MonoBehaviour
     [Header("VFX Settings")]
     public Transform vfxSpawnPoint;
 
+    [Header("Score Settings")]
+    public float scoreRadius = 0.3f;
+
     private const float TeleportThreshold = 5f;
 
     private Collider areaCollider;
@@ -43,9 +46,9 @@ public class ScoreArea : MonoBehaviour
             if (Mathf.Abs(currentY - previousY) > TeleportThreshold) continue;
 
             Vector3 pos = ball.transform.position;
-            bool insideXZ = pos.x >= area.min.x && pos.x <= area.max.x &&
-                            pos.z >= area.min.z && pos.z <= area.max.z;
-            if (!insideXZ) continue;
+            Vector2 ballXZ = new Vector2(pos.x, pos.z);
+            Vector2 centerXZ = new Vector2(area.center.x, area.center.z);
+            if (Vector2.Distance(ballXZ, centerXZ) > scoreRadius) continue;
 
             bool crossedDown = previousY > planeY && currentY <= planeY;
             bool crossedUp = previousY < planeY && currentY >= planeY;
@@ -66,6 +69,32 @@ public class ScoreArea : MonoBehaviour
                     BasketballGameManager.Instance.HandleScore(ball, spawnPos);
                 }
             }
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Collider c = areaCollider != null ? areaCollider : GetComponent<Collider>();
+        Vector3 center = c != null ? c.bounds.center : transform.position;
+
+        Gizmos.color = new Color(0f, 1f, 0f, 1f);
+        DrawCircle(center, scoreRadius);
+
+        Gizmos.color = new Color(0f, 1f, 0f, 0.15f);
+        Vector3 planeSize = new Vector3(scoreRadius * 2f, 0.001f, scoreRadius * 2f);
+        Gizmos.DrawCube(center, planeSize);
+    }
+
+    private void DrawCircle(Vector3 center, float radius)
+    {
+        const int segments = 48;
+        Vector3 previous = center + new Vector3(radius, 0f, 0f);
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = (i / (float)segments) * Mathf.PI * 2f;
+            Vector3 next = center + new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
+            Gizmos.DrawLine(previous, next);
+            previous = next;
         }
     }
 }
