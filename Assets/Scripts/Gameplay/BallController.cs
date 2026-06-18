@@ -12,7 +12,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
     public bool enteredHoopFromBelow = false;
     public int lastThrowerActorNumber = -1;
     public bool isFireBall = false;
-    public bool thrownAsPenalty = false;
     public int allowedPickupActor = -1;
 
     private Rigidbody rb;
@@ -112,12 +111,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             if (photonView.IsMine)
             {
                 touchedHoop = true;
-                if (isPenaltyBall)
-                {
-                    isPenaltyBall = false;
-                    bounceCount = 0;
-                    UpdateVisuals();
-                }
             }
             return;
         }
@@ -308,7 +301,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
                 UpdateVisuals();
 
                 bounceCount = 0;
-                thrownAsPenalty = false;
                 touchedHoop = false;
                 enteredHoopFromBelow = false;
                 lastThrowerActorNumber = -1;
@@ -343,7 +335,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
 
         lastThrowerActorNumber = actorNumber;
         isFireBall = isFire;
-        thrownAsPenalty = isPenaltyBall;
         allowedPickupActor = 0;
 
         if (rb != null)
@@ -375,7 +366,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
         bounceCount = 0;
         isPenaltyBall = false;
         isFireBall = false;
-        thrownAsPenalty = false;
         if (rb != null)
         {
             rb.mass = baseMass;
