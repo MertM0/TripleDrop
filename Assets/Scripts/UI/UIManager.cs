@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     [Header("Settings Panel")]
     public Button settingsButton;
     public GameObject settingsPanel;
+    public GameObject mainMenuPanel;
     public Button backButton;
     public Slider sfxSlider;
     public Slider musicSlider;
@@ -62,6 +63,10 @@ public class UIManager : MonoBehaviour
 
     private void OpenSettings()
     {
+        if (mainMenuPanel != null)
+        {
+            mainMenuPanel.SetActive(false);
+        }
         if (settingsPanel != null)
         {
             settingsPanel.SetActive(true);
@@ -75,6 +80,10 @@ public class UIManager : MonoBehaviour
         if (settingsPanel != null)
         {
             settingsPanel.SetActive(false);
+        }
+        if (mainMenuPanel != null)
+        {
+            mainMenuPanel.SetActive(true);
         }
     }
 
