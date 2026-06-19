@@ -115,8 +115,6 @@ public class BallController : MonoBehaviourPunCallbacks, IPunObservable
             return;
         }
 
-        enteredHoopFromBelow = false;
-
         if (!isHeld && !collision.gameObject.CompareTag("Player") && !collision.gameObject.CompareTag("Hoop"))
         {
             if (photonView.IsMine)
