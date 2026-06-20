@@ -187,7 +187,6 @@ MonoBehaviour:
   enteredHoopFromBelow: 0
   lastThrowerActorNumber: -1
   isFireBall: 0
-  thrownAsPenalty: 0
   allowedPickupActor: -1
   orangeMat: {fileID: 2100000, guid: 5f623e3e7d0c21f47abca1bb44fe4821, type: 2}
   yellowMat: {fileID: 2100000, guid: 035587c2630619c4193c73bd4d7063ec, type: 2}

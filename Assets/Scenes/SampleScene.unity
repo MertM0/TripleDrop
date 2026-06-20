@@ -10489,6 +10489,70 @@ PrefabInstance:
       propertyPath: m_Name
       value: --MANAGERS--
       objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnHeight
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnInterval
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnAreaSize.x
+      value: 17.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnAreaSize.y
+      value: 1.29
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnAreaSize.z
+      value: 25.48
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: spawnAreaCenter.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: maxConcurrentPowerUps
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[0].prefabName
+      value: PowerUp_SpeedUP
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[1].prefabName
+      value: PowerUp_JumpUP
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[2].prefabName
+      value: PowerUp_PowerUP
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[3].prefabName
+      value: PowerUp_LowGravity
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[4].prefabName
+      value: PowerUp_HighGravity
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[5].prefabName
+      value: PowerUp_HeavyBall
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[6].prefabName
+      value: PowerUp_LightBall
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[7].prefabName
+      value: PowerUp_FireBall
+      objectReference: {fileID: 0}
+    - target: {fileID: 7243634514500906289, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
+      propertyPath: powerUpSettings.Array.data[8].prefabName
+      value: PowerUp_PlatformPanic
+      objectReference: {fileID: 0}
     - target: {fileID: 9187219889622514881, guid: 2383d4944aa02b04c82300bea32119c7, type: 3}
       propertyPath: spawnPoint
       value: 
