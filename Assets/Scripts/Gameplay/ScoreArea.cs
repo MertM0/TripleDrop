@@ -42,7 +42,6 @@ public class ScoreArea : MonoBehaviour
             lastBallHeights[ball] = currentY;
             if (!hasPrevious) continue;
 
-            if (ball.isHeld) continue;
             if (Mathf.Abs(currentY - previousY) > TeleportThreshold) continue;
 
             Vector3 pos = ball.transform.position;
@@ -63,7 +62,7 @@ public class ScoreArea : MonoBehaviour
                 {
                     ball.enteredHoopFromBelow = false;
                 }
-                else if (BasketballGameManager.Instance != null)
+                else if (!ball.isHeld && BasketballGameManager.Instance != null)
                 {
                     Vector3 spawnPos = vfxSpawnPoint != null ? vfxSpawnPoint.position : transform.position;
                     BasketballGameManager.Instance.HandleScore(ball, spawnPos);
