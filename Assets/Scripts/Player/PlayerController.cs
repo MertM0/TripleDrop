@@ -42,6 +42,7 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     public bool isCharging = false;
 
     public static PlayerController Local;
+    public bool InputLocked = false;
 
     private void Awake()
     {
@@ -82,6 +83,7 @@ public class PlayerController : MonoBehaviourPunCallbacks, IPunObservable
     private void Update()
     {
         if (!photonView.IsMine) return;
+        if (InputLocked) return;
 
         HandleMovement();
         UpdateFootsteps();

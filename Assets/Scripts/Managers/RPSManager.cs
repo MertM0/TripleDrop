@@ -51,6 +51,9 @@ public class RPSManager : MonoBehaviourPunCallbacks
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        if (PlayerController.Local != null)
+            PlayerController.Local.InputLocked = true;
+
         Debug.Log("RPSManager: RPS panel opened.");
     }
 
@@ -150,6 +153,9 @@ public class RPSManager : MonoBehaviourPunCallbacks
     {
         hasChosen = false;
         SetButtonsInteractable(true);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
         Hashtable clearProps = new Hashtable { { RPS_CHOICE_KEY, -1 } };
         PhotonNetwork.LocalPlayer.SetCustomProperties(clearProps);
